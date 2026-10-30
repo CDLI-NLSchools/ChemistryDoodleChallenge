@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chemistry Doodle Challenge</title>
+<style>
+  :root{
+    --ink:#1c2430; --muted:#5a6572; --accent:#0e7a6d; --accent-dark:#0a5c53;
+    --card:#ffffff; --bg:#eef2f6; --line:#d4dce4; --soft:#f2f9f7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.45;}
+  .wrap{max-width:860px;margin:0 auto;padding:16px 14px 48px;}
+  header{margin:10px 0 6px;}
+  h1{font-size:1.7rem;margin:0 0 2px;}
+  h2{font-size:1.25rem;margin:0 0 4px;}
+  .subtitle{color:var(--muted);font-size:1rem;margin:0 0 10px;}
+  .intro{font-size:1.02rem;margin:0 0 10px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px;margin:14px 0;box-shadow:0 1px 3px rgba(20,40,60,.06);}
+  .countercard{border:2px solid var(--accent);background:var(--soft);text-align:center;}
+  .countercard .big{font-size:1.5rem;font-weight:700;color:var(--accent-dark);}
+  .promptnum{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;
+    font-size:.85rem;font-weight:700;padding:2px 10px;margin-bottom:6px;}
+  .starter{color:var(--muted);margin:0 0 12px;}
+  label.fieldlabel{display:block;font-weight:600;margin:12px 0 4px;}
+  label.fieldlabel:first-child{margin-top:0;}
+  input[type=text].field{width:100%;padding:9px 10px;font:inherit;font-size:1rem;
+    border:1px solid var(--line);border-radius:8px;min-height:44px;}
+  button{cursor:pointer;font:inherit;border:1px solid var(--accent);background:var(--accent);color:#fff;
+    padding:9px 16px;border-radius:8px;min-height:44px;font-weight:600;}
+  button:hover{background:var(--accent-dark);}
+  button.secondary{background:#fff;color:var(--accent);}
+  button.secondary:hover{background:var(--soft);}
+  button:disabled{opacity:.5;cursor:default;}
+  button:focus-visible,input:focus-visible{outline:3px solid #f2b01e;outline-offset:2px;}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 0;}
+  .drawtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px;}
+  .swatch{width:40px;height:40px;min-height:40px;border-radius:50%;border:3px solid #fff;
+    box-shadow:0 0 0 2px var(--line);padding:0;}
+  .swatch[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink);}
+  .sizebtn{background:#fff;color:var(--ink);border:2px solid var(--line);min-height:40px;padding:6px 12px;}
+  .sizebtn[aria-pressed="true"]{border-color:var(--ink);background:var(--soft);}
+  canvas.pad{width:100%;height:auto;background:#fff;border:2px solid var(--line);border-radius:10px;
+    touch-action:none;display:block;}
+  .donetag{color:var(--accent-dark);font-weight:700;}
+  .summary h2{margin-top:0;}
+  .summary h3{margin:16px 0 4px;font-size:1.05rem;}
+  .summary p.answer{margin:4px 0;white-space:pre-wrap;}
+  .summary ul{margin:4px 0 0;padding-left:22px;}
+  .summary li{margin:3px 0;}
+  .drawing-img{max-width:100%;height:auto;border:2px solid var(--line);border-radius:10px;background:#fff;}
+  .empty-note{color:var(--muted);font-style:italic;}
+  .copied{color:var(--accent-dark);font-weight:600;min-height:1.3em;margin:10px 0 0;}
+  .hidden{display:none !important;}
+  @media (max-width:560px){
+    h1{font-size:1.4rem;}
+  }
+  @media print{
+    body{background:#fff;}
+    .no-print{display:none !important;}
+    .card{box-shadow:none;border-color:#999;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Chemistry Doodle Challenge</h1>
+    <p class="subtitle">Science 1206, Unit 2: Chemical Reactions, Section 1: Everyday Chemistry, Lesson 1 (Bonus Activity)</p>
+    <p class="intro">Here is a bonus activity if you are looking for some extra practice. Chemistry is at work all around us, every day: in batteries, kitchens, cleaning cupboards, medicines, and more. The learning goal for this lesson is to provide examples of how science and technology are an integral part of our lives and our community, and every doodle below is one of those examples.</p>
+    <p class="intro">Pick any doodle card, draw your idea in the drawing space, and add a caption that explains what your doodle shows. Do as many cards as you like: there is no finishing line here. Your doodles stay on this page: nothing is sent anywhere. When you are done, print or copy your doodle sheet to keep it with your work.</p>
+  </header>
+
+  <div class="card countercard" role="status" aria-live="polite">
+    <p class="intro" style="margin:0;">Doodles drawn so far: <span class="big" id="doodleCount">0 of 8</span></p>
+  </div>
+
+  <main id="board">
+    <div id="doodleList"></div>
+    <div class="actions no-print">
+      <button type="button" id="finishBtn">See my doodle sheet</button>
+    </div>
+  </main>
+
+  <section class="card summary hidden" id="summary" aria-labelledby="h-summary">
+    <h2 id="h-summary">My Chemistry Doodle Sheet</h2>
+    <p class="subtitle">Science 1206, Unit 2: Chemical Reactions, Section 1: Everyday Chemistry, Lesson 1</p>
+    <div id="summaryBody"></div>
+    <div class="actions no-print">
+      <button type="button" id="printBtn">Print</button>
+      <button type="button" class="secondary" id="copyBtn">Copy</button>
+      <button type="button" class="secondary" id="backBtn">Back to my doodles</button>
+    </div>
+    <p class="copied" id="copyNote" role="status" aria-live="polite"></p>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var PROMPTS = [
+    { title: "Draw a battery doing its job", hint: "Show what the battery is powering, and how you can tell it is working." },
+    { title: "Draw a chemical change happening in a kitchen", hint: "Think of cooking or baking: food changing colour, bubbling, or giving off a smell as it heats up." },
+    { title: "Draw a cleaning product at work", hint: "Soap, spray, or bubbles lifting away dirt and germs." },
+    { title: "Draw a fuel in action", hint: "Something burning to give off heat, light, or motion." },
+    { title: "Draw a medicine helping someone feel better", hint: "Medicines are chemistry made to help our bodies." },
+    { title: "Draw a plastic object, and where it ends up", hint: "Show the object being used, and what happens to it afterwards." },
+    { title: "Draw matter changing state", hint: "A solid melting, a liquid evaporating or boiling, or a gas condensing back into drops." },
+    { title: "Draw chemistry at work in your community", hint: "Look for science and technology helping people where you live." }
+  ];
+
+  var COLORS = [
+    { name: "Black", value: "#1c2430" },
+    { name: "Teal", value: "#0e7a6d" },
+    { name: "Blue", value: "#0b5cad" },
+    { name: "Purple", value: "#7b2dbe" },
+    { name: "Pink", value: "#d1345b" },
+    { name: "Red", value: "#c23b2e" },
+    { name: "Orange", value: "#e07b00" },
+    { name: "Yellow", value: "#d9a400" },
+    { name: "Green", value: "#1e8a4c" },
+    { name: "Brown", value: "#8a5a2b" },
+    { name: "Eraser (white)", value: "#ffffff" }
+  ];
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+  }
+
+  var doodleList = document.getElementById("doodleList");
+  var doodles = [];
+
+  function updateCount() {
+    var done = doodles.filter(function (d) { return d.strokes.length > 0; }).length;
+    document.getElementById("doodleCount").textContent = done + " of " + PROMPTS.length;
+    doodles.forEach(function (d) {
+      d.doneTag.textContent = d.strokes.length > 0 ? " (drawn)" : "";
+    });
+  }
+
+  PROMPTS.forEach(function (prompt, idx) {
+    var n = idx + 1;
+    var card = document.createElement("section");
+    card.className = "card";
+    card.setAttribute("aria-labelledby", "h-doodle" + n);
+
+    var num = document.createElement("span");
+    num.className = "promptnum";
+    num.textContent = "Doodle " + n + " of " + PROMPTS.length;
+    card.appendChild(num);
+
+    var h = document.createElement("h2");
+    h.id = "h-doodle" + n;
+    h.textContent = prompt.title;
+    var doneTag = document.createElement("span");
+    doneTag.className = "donetag";
+    h.appendChild(doneTag);
+    card.appendChild(h);
+
+    var hint = document.createElement("p");
+    hint.className = "starter";
+    hint.textContent = prompt.hint;
+    card.appendChild(hint);
+
+    var tools = document.createElement("div");
+    tools.className = "drawtools no-print";
+    tools.setAttribute("role", "group");
+    tools.setAttribute("aria-label", "Drawing tools for doodle " + n);
+    card.appendChild(tools);
+
+    var canvas = document.createElement("canvas");
+    canvas.className = "pad";
+    canvas.width = 640;
+    canvas.height = 400;
+    canvas.setAttribute("aria-label", "Drawing area for: " + prompt.title);
+    card.appendChild(canvas);
+
+    var capLabel = document.createElement("label");
+    capLabel.className = "fieldlabel";
+    capLabel.setAttribute("for", "caption" + n);
+    capLabel.textContent = "What my doodle shows";
+    var capInput = document.createElement("input");
+    capInput.type = "text";
+    capInput.className = "field";
+    capInput.id = "caption" + n;
+    capInput.placeholder = "One line about your doodle...";
+    capInput.autocomplete = "off";
+    card.appendChild(capLabel);
+    card.appendChild(capInput);
+
+    doodleList.appendChild(card);
+
+    var ctx = null;
+    try { ctx = canvas.getContext("2d"); } catch (e) { ctx = null; }
+    var d = {
+      n: n,
+      prompt: prompt,
+      canvas: canvas,
+      ctx: ctx,
+      caption: capInput,
+      doneTag: doneTag,
+      strokes: [],
+      color: COLORS[0].value,
+      size: 5
+    };
+    doodles.push(d);
+
+    function redraw() {
+      if (!d.ctx) { return; }
+      d.ctx.fillStyle = "#ffffff";
+      d.ctx.fillRect(0, 0, canvas.width, canvas.height);
+      d.strokes.forEach(function (s) {
+        d.ctx.strokeStyle = s.color;
+        d.ctx.lineWidth = s.size;
+        d.ctx.lineCap = "round";
+        d.ctx.lineJoin = "round";
+        d.ctx.beginPath();
+        s.points.forEach(function (p, i) {
+          if (i === 0) { d.ctx.moveTo(p.x, p.y); } else { d.ctx.lineTo(p.x, p.y); }
+        });
+        d.ctx.stroke();
+      });
+    }
+    d.redraw = redraw;
+    redraw();
+
+    COLORS.forEach(function (c, ci) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "swatch";
+      b.style.background = c.value;
+      b.setAttribute("aria-label", "Pen colour for doodle " + n + ": " + c.name);
+      b.setAttribute("aria-pressed", ci === 0 ? "true" : "false");
+      b.addEventListener("click", function () {
+        d.color = c.value;
+        Array.prototype.forEach.call(tools.querySelectorAll(".swatch"), function (s) {
+          s.setAttribute("aria-pressed", "false");
+        });
+        b.setAttribute("aria-pressed", "true");
+      });
+      tools.appendChild(b);
+    });
+    [["Thin", 3], ["Medium", 5], ["Thick", 10]].forEach(function (pair, si) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "sizebtn";
+      b.textContent = pair[0];
+      b.setAttribute("aria-pressed", si === 1 ? "true" : "false");
+      b.setAttribute("aria-label", "Pen size for doodle " + n + ": " + pair[0]);
+      b.addEventListener("click", function () {
+        d.size = pair[1];
+        Array.prototype.forEach.call(tools.querySelectorAll(".sizebtn"), function (s) {
+          s.setAttribute("aria-pressed", "false");
+        });
+        b.setAttribute("aria-pressed", "true");
+      });
+      tools.appendChild(b);
+    });
+    var undo = document.createElement("button");
+    undo.type = "button";
+    undo.className = "secondary";
+    undo.textContent = "Undo";
+    undo.addEventListener("click", function () { d.strokes.pop(); redraw(); updateCount(); });
+    tools.appendChild(undo);
+    var clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "secondary";
+    clear.textContent = "Clear drawing";
+    clear.addEventListener("click", function () { d.strokes = []; redraw(); updateCount(); });
+    tools.appendChild(clear);
+
+    var drawingNow = false;
+    var currentStroke = null;
+    function pos(evt) {
+      var rect = canvas.getBoundingClientRect();
+      var rw = rect.width || canvas.width;
+      var rh = rect.height || canvas.height;
+      return {
+        x: (evt.clientX - rect.left) * (canvas.width / rw),
+        y: (evt.clientY - rect.top) * (canvas.height / rh)
+      };
+    }
+    canvas.addEventListener("pointerdown", function (evt) {
+      if (!d.ctx) { return; }
+      drawingNow = true;
+      currentStroke = { color: d.color, size: d.size, points: [pos(evt)] };
+      d.strokes.push(currentStroke);
+      if (canvas.setPointerCapture) { try { canvas.setPointerCapture(evt.pointerId); } catch (e) {} }
+      redraw();
+      updateCount();
+      evt.preventDefault();
+    });
+    canvas.addEventListener("pointermove", function (evt) {
+      if (!drawingNow || !currentStroke) { return; }
+      currentStroke.points.push(pos(evt));
+      redraw();
+    });
+    function stop() { drawingNow = false; currentStroke = null; }
+    canvas.addEventListener("pointerup", stop);
+    canvas.addEventListener("pointercancel", stop);
+    canvas.addEventListener("pointerleave", stop);
+  });
+
+  updateCount();
+
+  /* Summary */
+  function collectData() {
+    return doodles.map(function (d) {
+      var url = "";
+      if (d.strokes.length > 0) {
+        try { url = d.canvas.toDataURL("image/png"); } catch (e) { url = ""; }
+      }
+      return {
+        n: d.n,
+        title: d.prompt.title,
+        url: url,
+        drawn: d.strokes.length > 0,
+        caption: d.caption.value.trim()
+      };
+    });
+  }
+  function compileSummaryHtml(items) {
+    var done = items.filter(function (it) { return it.drawn; });
+    var notYet = items.filter(function (it) { return !it.drawn; });
+    var html = "";
+    if (!done.length) {
+      html += "<p class=\"empty-note\">No doodles drawn yet. Head back and try one: a quick sketch is all it takes.</p>";
+    }
+    done.forEach(function (it) {
+      html += "<h3>Doodle " + it.n + ": " + escapeHtml(it.title) + "</h3>";
+      if (it.url) {
+        html += "<img class=\"drawing-img\" src=\"" + it.url + "\" alt=\"My doodle: " + escapeHtml(it.title) + "\">";
+      }
+      html += "<p class=\"answer\"><strong>What my doodle shows:</strong> " +
+              escapeHtml(it.caption || "No caption added yet.") + "</p>";
+    });
+    if (notYet.length) {
+      html += "<h3>Doodle cards I have not tried yet</h3>";
+      html += "<ul>";
+      notYet.forEach(function (it) { html += "<li>" + escapeHtml(it.title) + "</li>"; });
+      html += "</ul>";
+      html += "<p class=\"answer\">That is fine. This was a bonus activity, and every doodle you did draw is an example of chemistry in everyday life.</p>";
+    }
+    html += "<p class=\"intro\" style=\"margin-top:16px;\">Keep an eye out for chemistry in your everyday life. Take a break from your screen before continuing to the next activity.</p>";
+    return html;
+  }
+  function compileSummaryText(items) {
+    var lines = ["My Chemistry Doodle Sheet", "Science 1206, Unit 2: Chemical Reactions, Section 1: Everyday Chemistry, Lesson 1", ""];
+    var done = items.filter(function (it) { return it.drawn; });
+    var notYet = items.filter(function (it) { return !it.drawn; });
+    if (!done.length) { lines.push("(No doodles drawn yet.)"); lines.push(""); }
+    done.forEach(function (it) {
+      lines.push("Doodle " + it.n + ": " + it.title);
+      lines.push("Drawn on the page (see the printed copy).");
+      lines.push("What my doodle shows: " + (it.caption || "No caption added yet."));
+      lines.push("");
+    });
+    if (notYet.length) {
+      lines.push("Doodle cards I have not tried yet:");
+      notYet.forEach(function (it) { lines.push("- " + it.title); });
+      lines.push("");
+    }
+    lines.push("Take a break from your screen before continuing to the next activity.");
+    return lines.join("\n");
+  }
+
+  var board = document.getElementById("board");
+  var summary = document.getElementById("summary");
+  var summaryBody = document.getElementById("summaryBody");
+  var copyNote = document.getElementById("copyNote");
+
+  document.getElementById("finishBtn").addEventListener("click", function () {
+    summaryBody.innerHTML = compileSummaryHtml(collectData());
+    summary.classList.remove("hidden");
+    board.classList.add("hidden");
+    copyNote.textContent = "";
+    document.getElementById("h-summary").setAttribute("tabindex", "-1");
+    document.getElementById("h-summary").focus();
+    window.scrollTo(0, 0);
+  });
+  document.getElementById("backBtn").addEventListener("click", function () {
+    summary.classList.add("hidden");
+    board.classList.remove("hidden");
+    window.scrollTo(0, 0);
+  });
+  document.getElementById("printBtn").addEventListener("click", function () { window.print(); });
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    var text = compileSummaryText(collectData());
+    function done() { copyNote.textContent = "Copied. You can paste your doodle sheet wherever you keep your work."; }
+    function fallback() {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        done();
+      } catch (e) {
+        copyNote.textContent = "Copy did not work here. Try printing your doodle sheet instead.";
+      }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+  });
+})();
+</script>
+</body>
+</html>
